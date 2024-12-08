@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#8wg&#f2ppt#46s)tq4y3!1i*n=-h#8r!&l!)p(v34cyf*(0gh'
+SECRET_KEY = 'django-insecure-x#^n9rr61ckwsyhk+q&q5kiavf)km_o69s0#vb)__k8f_^ewk1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'blog',
-    'taggit',
 ]
 
 MIDDLEWARE = [
@@ -56,7 +55,7 @@ ROOT_URLCONF = 'django_blog.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -77,12 +76,14 @@ WSGI_APPLICATION = 'django_blog.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_blog',  # Database name you just created
-        'USER': 'postgres_user',  # The PostgreSQL user you created
-        'PASSWORD': 'pass_gres',  # The password for that user
-        'HOST': 'localhost',  # Default for local development
-        'PORT': '5432',  # Default PostgreSQL port
+        'NAME': 'your_db_name',  # Replace with your actual database name
+        'USER': 'your_username',  # Replace with your PostgreSQL username
+        'PASSWORD': 'your_password',  # Replace with your PostgreSQL password
+        'HOST': 'localhost',  # Replace with your host (default is localhost)
+        'PORT': '5432',
     }
 }
 
@@ -122,7 +123,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "blog/static"]
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+TEMPLATES = [
+    {
+        'DIRS': [BASE_DIR / 'templates'],
+    },
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
