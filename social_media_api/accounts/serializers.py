@@ -1,58 +1,69 @@
 from rest_framework import serializers
-from .models import User
+from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate, get_user_model
+
+User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'bio', 'profile_picture', 'followers']
+        read_only_fields = ['followers']
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    token = serializers.SerializerMethodField(read_only=True)
+    def update(self, instance, validated_data):
+        # Update the fields based on validated_data
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        instance.bio = validated_data.get('bio', instance.bio)
+        instance.profile_picture = validated_data.get('profile_picture', instance.profile_picture)
 
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'bio', 'profile_picture', 'first_name', 'last_name', 'token']
+        # Update the password only if provided (hashing automatically handled)
+        password = validated_data.get('password')
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
+
+
+# class RegisterSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['username', 'password', 'email', 'bio', 'profile_picture']
+#         extra_kwargs = {'password': {'write_only': True}}
+
+#     def create(self, validated_data):
+#         user = User.objects.create_user(
+#             username=validated_data['username'],
+#             email=validated_data.get('email', ''),
+#             bio=validated_data.get('bio', ''),
+#             profile_picture=validated_data.get('profile_picture', ''),
+#             password=validated_data['password']
+#         )
+#         return user
+
+
+class RegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=255)
+    email = serializers.EmailField()
+    password = serializers.CharField(max_length=128, write_only=True)
 
     def create(self, validated_data):
+        # Create the user
         user = get_user_model().objects.create_user(
-            username = validated_data['username'],
-            email = validated_data.get('email', ''),
-            password=validated_data['password'],
-            bio=validated_data.get('bio', ''),
-            profile_picture=validated_data.get('profile_picture', None),
-            first_name = validated_data.get('first_name'), 
-            last_name = validated_data.get('last_name')
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password']
         )
+        # Generate a token for the user
         Token.objects.create(user=user)
         return user
     
-    def get_token(self, obj):
-        token, _ = Token.objects.get_or_create(user=obj)
-        return token.key
-    
-class UserLoginSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
-    password = serializers.CharField()
-    token = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User 
-        fields = ['username', 'password', 'token']
-        
-    def validate(self, data):
-        username = data.get('username')
-        password = data.get('password')
-        if username and password:
-            user = authenticate(username=username, password=password)
-            if not user:
-                raise serializers.ValidationError("Invalid username or password")
-        else:
-            raise serializers.ValidationError("Both username and password are required")
-        return data
-    
-    def get_token(self, obj):
-        token, _ = Token.objects.get_or_create(user=self.user)
-        return token.key
-        
+    def to_representation(self, instance):
+        """
+        Format the response using the UserSerializer and include the token.
+        """
+        user_data = UserSerializer(instance).data
+        # user_data['token'] = instance.auth_token.key  # Include the generated token
+        return {'user_info': user_data,
+                'token': instance.auth_token.key }
